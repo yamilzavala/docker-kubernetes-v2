@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  mongodb:
+    image: 'mongo'
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=yamil
+    #   MONGO_INITDB_ROOT_USERNAME: yamil
+    #   MONGO_INITDB_ROOT_PASSWORD: secret
+    volumes: 
+      - type: volume
+        source: data
+        target: /data/db
+    env_file:
+      - ./env/mongo.env
+  
+  backend:
+    build: ./backend
+    # build:
+    #   context: ./backend
+    #   dockerfile: Dockerfile
+    #   args:
+    #     some-arg: 1
+    env_file:
+      - ./env/backend.env
+    volumes:
+      - type: volume
+        source: logs
+        target: /app/logs
+      - type: bind
+        source: ./backend
+        target: /app
+      - type: volume
+        target: /app/node_modules
+    ports:
+      - '80:80'
+    develop:
+      watch:
+        - path: ./backend
+          target: /app
+          action: sync
+    depends_on:
+      - mongodb
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: ./frontend/src
+        target: /app/src
+    ports:
+      - '3000:3000'
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+volumes:
+  data:
+  logs:

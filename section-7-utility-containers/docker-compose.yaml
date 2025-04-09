@@ -1,0 +1,13 @@
+# Execution by: 
+# docker-compose run --rm [name-service] [command]
+# example: docker-compose run --rm npm init
+version: "14-alpine"
+services:
+  npm:
+    build: ./
+    stdin_open: true
+    tty: true
+    volumes:
+      - type: bind
+        source: ./
+        target: /app

@@ -1,0 +1,5 @@
+## Bash ##
+docker run -it -v "C:/Users/yamil.zavala/Desktop/Docker-maximilian/section-7-utility-containers/Dockerfile:/app"  node-util npm init
+
+## WSL ##
+docker run -it -v /mnt/c/Users/yamil.zavala/Desktop/Docker-maximilian/section-7-utility-containers:/app  node-util npm init

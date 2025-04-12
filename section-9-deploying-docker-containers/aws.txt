@@ -1,0 +1,14 @@
+key pair name: 
+example-1 
+
+Connect with AWS:
+chmod 400 "example-1.pem"
+ssh -i "example-1.pem" ec2-user@ec2-3-133-159-194.us-east-2.compute.amazonaws.com
+
+Install in virtual machine in AWS:
+sudo yum update -y
+sudo yum -y install docker 
+sudo service docker start 
+sudo usermod -a -G docker ec2-user
+sudo systemctl enable docker
+docker version

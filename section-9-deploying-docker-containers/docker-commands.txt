@@ -1,0 +1,2 @@
+docker tag [image-name] [repository-name] 
+docker tag node-dep-example-1 yamil189/node-example-1

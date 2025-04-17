@@ -1,0 +1,9 @@
+## frontend (cloud - for AWS)
+1. (local)      => docker build -t goals-react -f ./frontend/Dockerfile.prod ./frontend
+2. (docker hub) => create new repository => name goals-react
+3. (local)      => docker tag goals-react yamil189/goals-react
+4. (local)      => docker push yamil189/goals-react
+
+
+## local - compose
+docker-compose up

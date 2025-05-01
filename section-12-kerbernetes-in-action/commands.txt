@@ -1,0 +1,34 @@
+Si estamos en windows, abrir una terminal WSL para iteractuar con kubernetes.
+
+Levantamos el clúster: 
+> minikube start --driver=docker
+
+Con minikube start estás diciendo:
+“🔥¡Ey Kubernetes! Creá tu fábrica y ponete a funcionar en mi compu.”
+Y Minikube te levanta:
+> El nodo maestro
+> Los servicios básicos (DNS, storage)
+> La conexión para que kubectl pueda hablar con ese clúster
+
+Con kubectl podés:
+> Crear una app: kubectl create deployment
+> Ver los nodos: kubectl get nodes
+> Ver los contenedores (pods): kubectl get pods
+
+
+Tu PC
+ └── Minikube (te crea un clúster Kubernetes en local)
+      └── Nodo principal (Control Plane) ← ahí se decide todo
+           └── Pods (tus apps corriendo en contenedores)
+               └── Servicios (acceso a esas apps desde el exterior)
+kubectl → herramienta para controlar ese clúster
+
+🎯 Analogía Final
+Imaginá que tu app es un restaurante 🍽️:
+> Docker: es la receta (cómo se cocina una app).
+> Kubernetes: es la cocina industrial, con múltiples cocineros que replican tu plato, lo reinician si se quemó, y atienden a muchos clientes.
+> Minikube: es como un simulador de esa cocina industrial, pero en tu casa.
+> kubectl: es el micrófono con el que le das órdenes al equipo.
+
+Ver en browser lo que tengo corriendo localmente en kubernetes:
+> minikube dashboard

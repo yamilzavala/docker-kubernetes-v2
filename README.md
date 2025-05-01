@@ -34,7 +34,7 @@ docker pull REPOSITORY/NAME:TAG
 -v NAME:/container/path
 ```
 
-### Docker compose (avid repeating docker build and docker run)
+### Docker compose (avoid repeating docker build and docker run)
 ### Docker compose up (build missing images and start all containers)
 ```bash
 docker-compose up 

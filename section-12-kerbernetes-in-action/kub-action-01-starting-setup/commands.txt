@@ -1,0 +1,127 @@
+Si estamos en windows, abrir una terminal WSL para iteractuar con kubernetes.
+
+Minikube: Es el cluster local por default (Master Node)
+Kubectl:  Es el servicio que maneja todas las directivas (ordenes) para menejar los objetos (recursos cono deployments, pods, rs, etc)
+
+MINIKUBE (Cluster-Master Node)
+ └──KUBECTL (Service)
+     └──DEPLOYMENT
+          └──WORKERNODE               
+               └──POD
+                   └──CONTAINER
+
+Levantamos el clúster: 
+> minikube start --driver=docker
+
+Con minikube start estás diciendo:
+“🔥¡Ey Kubernetes! Creá tu fábrica y ponete a funcionar en mi compu.”
+Y Minikube te levanta:
+> El nodo maestro
+> Los servicios básicos (DNS, storage)
+> La conexión para que kubectl pueda hablar con ese clúster
+
+Con kubectl podés:
+> Crear una app: kubectl create deployment
+> Ver los nodos: kubectl get nodes
+> Ver los contenedores (pods): kubectl get pods
+
+
+Tu PC
+ └── Minikube (te crea un clúster Kubernetes en local)
+      └── Nodo principal (Control Plane) ← ahí se decide todo
+           └── Pods (tus apps corriendo en contenedores)
+               └── Servicios (acceso a esas apps desde el exterior)
+kubectl → herramienta para controlar ese clúster
+
+🎯 Analogía Final
+Imaginá que tu app es un restaurante 🍽️:
+> Docker: es la receta (cómo se cocina una app).
+> Kubernetes: es la cocina industrial, con múltiples cocineros que replican tu plato, lo reinician si se quemó, y atienden a muchos clientes.
+> Minikube: es como un simulador de esa cocina industrial, pero en tu casa.
+> kubectl: es el micrófono con el que le das órdenes al equipo.
+
+Ver en browser lo que tengo corriendo localmente en kubernetes:
+> minikube dashboard
+
+kubernetes interactua con objetos
+ └──Pods
+ └──Deployments
+ └──Services
+ └──Volumes
+ └──...
+
+-------------------------------------------
+Los siguientes comandos seran ejecutados en una terminal WSL (linux)
+
+1.0 >>> BUILD del IMAGE
+Build the image
+> docker build -t kub-first-app .
+
+Sent image to kubernetes cluster as part of a POD or DEPLOYMENT
+> minikube start --driver=docker
+> minikube status (in WSL terminal), verify that default cluster is up and running. kubectl is connected to minikube cluster
+
+Note:
+Para crear un DEPLOYMENT basado en una imagen local (kub-first-app) es un error, 
+porque el container (virtual machine) actua como otra maquina (aunque este corriendo en nuestro local)
+y por lo tanto falla al tratar de encontrar la imagen. Por lo tanto, lo correcto es subir esa imagen a Dockerhub y luego crear el DEPLOYMENT basado en la imagen en el repo
+> kubectl create deployment first-app --image=kub-first-app ==> este comando es enviado a kubernetes cluster y el cluster busca esa imagen, y como el cluster corre en una maquina virtual, que no es igual a nuestra maquina local, y por eso no encuentra la imagen y falla
+> kubectl get deployments ==> READY 0/1
+> kubectl get pods ==> STATUS ErrImagePull, es un Image pull error
+
+1 >>> DEPLOYMENT OBJECT
+IMPERATIVE enfoque para enviar la instruccion de CREATE un DEPLOYMENT al cluster (minikube) con kubectl control command, basado en una imagen registrada en doker hub
+> ir a Dockerhub y crear un nuevo repo llamado "kub-first-app" ==> docker push yamil189/kub-first-app:tagname
+> docker tag kub-first-app yamil189/kub-first-app:tagname ==> renonbrar nuestra imagen local a "yamil189/kub-first-app:tagname"
+> docker push yamil189/kub-first-app:tagname ==> la imagen puede ser accedida por cualquiera en el mundo, incluido nuestro cluster machine
+> kubectl create deployment first-app --image=yamil189/kub-first-app:tagname
+> kubectl get deployments ==> READY 1/1
+> kubectl get pods ==> STATUS Running
+> kubectl describe pod <POD-NAME> ==> Check the POD's IP
+> minikube dashboard ==> GUI para ver el CLUSTER con DEPLOYMENTS, PODS, REPLICA SET, etc creados
+
+SEVICES OBJECT
+Un service se usa para poder CONECTAR un POD (has a INTERNAL IP that change when it is replaced) con otro POD en el mismo cluster EXTERNAMENTE.
+El objetivo de un SERVICE es agrupar PODs con un IP compartido que NO CAMBIARA.
+
+2 >>> CREAR un SERVICE IMPERATIVAMENTE para poder acceder al pod desde el exterior:
+> kubectl get deployments ==> take the deployment's name (first-app)
+> kubectl expose deployment first-app --type=LoadBalancer --port=8080
+> kubectl get svc
+> minikube service first-app ==> Te da una URL para acceder al pod desde el exterior (browser poe ejemplo)
+
+Si desde el browser queremos acceder a la URL dada por "minikube service first-app", pero accediendo a la ruta que rompe el container en el POD "URL/error", 
+el POD tendra un STATE Error, y luego de unos segundos volvera a recrearse (porque creamos un DEPLOYMENT que maneja ese POD y permite crear otra instance si la actual falla)
+
+3 >>> SCALING
+Replicas es una instancia de un POD/CONTAINER. 3 REPLICAS significa que el miso POD/CONTAINER esta corriendo 3 veces.
+> kubectl scale deployment/first-app --replicas=3
+> kubectl get pods => podemos ver 3 PODS
+> minikube service first-app
+> minikube dashboard
+> kubectl scale deployment/first-app --replicas=1
+
+4 >>> UPDATING DEPLOYMENTS (Importante - hay que cambiar el TAG para que las actualizaciones se apliquen)
+> Actualizamos nuestro SOURCE CODE, en este caso el "app.js" agregando un parrafo mas al html que retora por ejemplo.
+> docker build -t yamil189/kub-first-app:tagname . ==> Volvemos a construir la imagen 
+> docker push yamil189/kub-first-app:tagname
+> kubectl get deployments
+> kubectl set image deployment/first-app kub-first-app=yamil189/kub-first-app:tagname ==> esto no actualizara los nuevos cambios, solo se actualizara con un nuevo TAG de imagen
+
+> docker build -t yamil189/kub-first-app:v2 . ==> actualizamos tag
+> docker push yamil189/kub-first-app:v2
+> kubectl set image deployment/first-app kub-first-app=yamil189/kub-first-app:v2 
+> kubectl rollout status deployment/first-app 
+> minikube service first-app ==> chequear los cambios en browser
+
+5 >>> ROLLBACK (UNDO)
+> kubectl set image deployment/first-app kub-first-app=yamil189/kub-first-app:v11  ==> Forzamos un error en la actualizacion, poniendo una imagen que no esta registrada en el repo (yamil189/kub-first-app:v11)
+> kubectl rollout status deployment/first-app ==> va a quedar en un estado inconsistente, ya que no puede hacer pull de la imagen que no esta registrada, entonces tenemos que hacer un UNDO para volver a la version anterior
+> kubectl rollout undo deployment/first-app ==> vuelve a la version anterior
+> kubectl rollout status deployment/first-app ==> estado exitoso
+> kubectl rollout history deployment/first-app ==> para ver el historial de versiones
+> kubectl rollout history deployment/first-app --revision=3 ==> para ver una version especifica
+> kubectl rollout undo deployment/first-app --to-revision=1 ==> para volver a una version especifica
+## cleanup ##
+> kubectl delete service first-app
+> kubectl delete deployment first-app

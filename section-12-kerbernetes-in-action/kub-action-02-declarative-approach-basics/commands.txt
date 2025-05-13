@@ -1,0 +1,24 @@
+0 >>> RESOURCE DEFINITION FILES - DECLARATIVE APROACH
+Los RESOURCE DEFINITION FILES son parecidos a los DOCKER COMPOSE FILES, que permiten no tener que estar escribiendo y repitiendo instrucciones. 
+El un archivo con las intrucciones para que kubernetes cree objetos y los maneje
+> kubectl apply -f config.yaml
+
+kubernetes
+     └──Objects
+          └──Services
+               └──Metadata
+               └──Spec
+          └──Pods
+               └──Metadata
+               └──Spec
+          └──Deployment
+               └──Metadata
+               └──Spec
+          └──ReplicaSet
+               └──Metadata
+               └──Spec
+     
+
+1 >>> DEPLOYMENT CONFIGURATION FILE (DECLARATIVE)
+> creamos un archivo "deployment.yaml"
+> 

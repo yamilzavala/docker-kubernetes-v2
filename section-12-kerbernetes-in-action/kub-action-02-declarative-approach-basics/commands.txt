@@ -20,5 +20,166 @@ kubernetes
      
 
 1 >>> DEPLOYMENT CONFIGURATION FILE (DECLARATIVE)
-> creamos un archivo "deployment.yaml"
-> 
+> creamos un archivo "deployment.yaml" con el siguiente contenido:
+     apiVersion: apps/v1
+     kind: Deployment
+     metadata:
+       name: second-app-deployment
+     spec:
+       replicas: 1
+       selector:
+          matchLabels:
+            app: second-app # ==> los objetos que va a observar y controlar este DEPLOYMENT son objetos con el label "app:second-app" y "tier:backend". Se le esta diciendo que PODs pertenecen y van a ser controlados por este DEPLOYMENT
+            tier: backend
+     template: # ==> plantilla en base a la cual va a crear el objeto container
+       metadata: 
+         labels:
+           app: second-app
+           tier: backend
+       spec: 
+         containers:
+            - name: second-node
+              image: yamil189/kub-first-app:v2 
+> minikube start --driver=docker
+> minikube status
+> kubectl apply -f=deployment.yaml
+> kubectl get deployments
+> kubectl get pods
+
+2 >>> SERVICES CONFIGURATION FILE (DECLARATIVE)
+> Arriba creamos un DEPLOYMENT que maneja y crea PODs. Pero esos PODs por ahora no son accesibles, ya que no tenemos au un SERVICE creado.
+> Ahora creamos un archivo service.yaml con el siguiente contenido:
+
+     apiVersion: v1
+     kind: Service
+     metadata:
+       name: backend
+     spec: # ==> configuracion del service
+       selector: 
+         app: second-app # ==> Especifica que objetos estaran conectados a este servicio. Los PODs objet que va a exponer son los "app:second-app", al cluster o al exterior
+       ports:
+         - protocol: 'TCP'
+           port: 80
+           targetPort: 8080
+     type: LoadBalancer
+
+> kubectl apply -f service.yaml ==> Este SERVICES CONFIGURATION FILE seria algo similar a la forma imperativa "kubectl expose deployment first-app --port=8080 --type=LoadBalancer"
+> kubectl get services
+> minikube service backend ==> exponer el servicio para usarlo
+
+3 >>> Updating or deleting resources
+(UPDATE)
+> Para actualizar la cantidad de PODs por ejemplo, podemos ir al deployment.yaml y cambiar "replicas: 1" por "replicas: 3"
+> Y volver a correr el comando "kubectl apply -f=deployment.yaml"
+> kubectl get pods ==> obtendremos 3 PODs en lugar de uno
+> Si queremos cambiar por ejemplo la imagen desde "deployment.yaml" de "image: yamil189/kub-first-app:v2" a "image: yamil189/kub-first-app:tagname"
+> Volvemos a correr "kubectl apply -f=deployment.yaml"
+(DELETE)
+> kubectl delete -f=deployment.yaml -f=service.yaml ==> borra todos los recursos que maneja ese archivo
+> kubectl get pod
+> kubectl get rs
+> kubectl get services
+> kubectl get deployments
+
+4 >>> Multiple vs Simple config files 
+Podemos unir lo que tenemos en dos archivos de configuracion en uno solo y crear varios recursos al mismo tiempo
+> Lo unico que necesitamos para unir los dos archivos "deployment.yaml" + "service.yaml" es "---"
+
+     service.yaml CONTENT
+     ---
+     deployment.yaml CONTENT
+
+> Y quedaria algo asi:
+
+     apiVersion: v1
+     kind: Service
+     metadata:
+       name: backend
+     spec:
+       selector: 
+         app: second-app 
+       ports:
+         - protocol: 'TCP'
+           port: 80
+           targetPort: 8080
+     type: LoadBalancer     
+     ---
+     apiVersion: apps/v1
+     kind: Deployment
+     metadata:
+       name: second-app-deployment
+     spec:
+       replicas: 1
+       selector:
+          matchLabels:
+            app: second-app
+            tier: backend
+     template:
+       metadata: 
+         labels:
+           app: second-app
+           tier: backend
+       spec: 
+         containers:
+            - name: second-node
+              image: yamil189/kub-first-app:v2 
+
+> kubectl apply -f=master-deployment.yaml ==> crea el SERVICE, y el DEPLOYMENT
+> minikube service backend ==> exponemos el servicio para obtener la url a usar
+> kubectl get pod
+> kubectl get rs
+> kubectl get services
+> kubectl get deployments
+> kubectl delete -f=master-deployment.yaml
+
+
+
+5 >>> LABELS & SELECTORS
+Usados para comunicar recursos. Por ejemplo un servicio sabe a que recurso debe observar (selector) y exponer en base al label (labels) del recurso
+> Ejemplo 1 de selector:
+
+     spec:
+       selector: 
+         app: second-app
+
+> Ejemplo 2 de selector:
+
+     spec:
+       replicas: 1
+       selector:
+         matchLabels:
+           app: second-app
+           tier: backend
+
+> Ejemplo 3 de selector basado en matchExpressions:
+
+     spec:
+       replicas: 1
+       selector:
+         matchExpressions:
+           - {key: app, operator: In, values: [second-app, first-app]}
+
+> Ejemplo 4 de selector basado en matchExpressions:
+
+     spec:
+       replicas: 1
+       selector:
+         matchExpressions:
+           - {key: app, operator: NotIn, values: [second-app, first-app]}
+
+> Tambien podemos borrar imperativamente por label, pero para eso debemos agregar "labels" en la metadata del objeto que queremos borrar:
+     service.yamls
+          └──...
+          └──metadata
+               labels:
+                 group: example # ==> este es el identificador para borrar por label
+
+     deployment.yamls
+          └──...
+          └──metadata
+               labels:
+                 group: example # ==> este es el identificador para borrar por label
+> kubectl apply -f=deployment.yaml -f=service.yaml ==> para aplicar los nuevos labels agregados al config file
+> kubectl delete services -l group=example ==> Para borrar por labels imperativamente, borramos los servicios que tengan el label "group: example".
+> kubectl delete deployments -l group=example ==> Para borrar por labels imperativamente, borramos los deployments que tengan el label "group: example".
+Es importante que pongamos el nombre del objeto (services, deployments) que queremos eliminar, para evitar borrar recursos que no debemos borrar " ... delete services, deployments ..."

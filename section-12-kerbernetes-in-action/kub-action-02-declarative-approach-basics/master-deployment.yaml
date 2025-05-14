@@ -1,10 +1,20 @@
-# Con el enfoque IMPERATIVO seria asi: kubectl create deployment second-app-deployment --image=academind/kub-first-app:2 
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector: 
+    app: second-app
+  ports:
+    - protocol: 'TCP'
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: second-app-deployment
-  labels:
-    group: example
 spec:
   replicas: 1
   selector:
@@ -20,5 +30,3 @@ spec:
       containers:
         - name: second-node
           image: yamil189/kub-first-app:v2
-        # - name: ...
-        #   image: ...

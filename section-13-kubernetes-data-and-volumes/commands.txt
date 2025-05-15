@@ -29,7 +29,7 @@ VOlvermos a levantar un nuevo contenedor y ejecutamos un get:
 Eliminados el contendor y vemos como todo esto se traslada a kubernetes:
 > docker-compose down
 
-Es importante saber que los VOLUMES enkubernetes son parte de cada POD y depende de la vida del POD. Si el POD es borrado, el VOLUME sera borrado tambien.
+Es importante saber que los VOLUMES en kubernetes son parte de cada POD y depende de la vida del POD. Si el POD es borrado, el VOLUME sera borrado tambien.
 Levantamos minikube para comenzar con kubernetes:
 > minikube start --driver=docker
 > minikube status
@@ -128,16 +128,18 @@ En el server file "app.js", agregamos una nueva ruta para forzar el reinicio del
         process.exit(1) //Crashea y container y fuerza el reinicio
     })
 
-> Recreamos la nueva imagen (agregamos "v1" como TAG):
-    > docker build -t yamil189/kub-data-demo:v1 .
+> Recreamos la nueva imagen (agregamos "4" como TAG):
+    > docker build -t yamil189/kub-data-demo:4 .
 > Pusheamos la imagen a dockerhub:
-    > docker push yamil189/kub-data-demo:v1 
-> En el DEPLOYMENT-FILE actualizamos el nombre de la imagen con el nuevo TAG (v1):
+    > docker push yamil189/kub-data-demo:4 
+> En el DEPLOYMENT-FILE actualizamos el nombre de la imagen con el nuevo TAG (4):
           ....
           containers:
             - name: story
-              image: yamil189/kub-data-demo:v1
+              image: yamil189/kub-data-demo:4
           ....
 > Aplicamos la nueva configuracion:
     > kubectl apply -f=deployment.yaml
+    > kubectl apply -f=service.yaml
 > kubectl get pods
+> minikube service story-service

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: story-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: story
+  template: # ==> template del POD
+    metadata:
+      labels: 
+        app: story
+    spec: # especificacion para un POD individual
+      containers:
+        - name: story
+          image: yamil189/kub-data-demo:v1
+          volumeMounts:
+            - mountPath: /app/story
+              name: story-volume
+      volumes:
+        - name: story-volume
+          emptyDir: {}
+            
